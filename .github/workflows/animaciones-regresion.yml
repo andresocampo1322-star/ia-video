@@ -1,7 +1,7 @@
 name: Pruebas de regresion de animaciones
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feat/locomocion-opcional-v1]
 concurrency:
   group: animaciones-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -38,5 +38,15 @@ jobs:
         with:
           name: comparacion-animaciones-01
           path: artifacts/comparacion-animaciones-01/*.mp4
+          if-no-files-found: error
+      - name: Renderizar continuidad y camara (legado versus opt-in)
+        run: python -m tools.preview_cinematic_motion
+      - name: Publicar videos y capturas de continuidad
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparacion-cinematica-02
+          path: |
+            artifacts/comparacion-cinematica-02/*.mp4
+            artifacts/comparacion-cinematica-02/*.png
           if-no-files-found: error
 

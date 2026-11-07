@@ -65,6 +65,7 @@ class Move:
     x0: float
     x1: float
     dur: float
+    ease: str = "linear"
 
 
 @dataclass
@@ -94,8 +95,9 @@ class CharRuntime:
             if t < m.t0:
                 break
             u = clamp01((t - m.t0) / m.dur) if m.dur > 0 else 1.0
-            x = lerp(m.x0, m.x1, u)
-            dist += abs(m.x1 - m.x0) * u
+            fraction = smoothstep(0.0, 1.0, u) if m.ease == "ease_in_out" else u
+            x = lerp(m.x0, m.x1, fraction)
+            dist += abs(m.x1 - m.x0) * fraction
             if 0 < u < 1:
                 moving = 1 if m.x1 > m.x0 else -1
         return x, dist, moving
@@ -133,6 +135,8 @@ class SceneRuntime:
     keywords: List[Tuple[float, float, skia.Image]]
     camera: List[dict]
     prop_painter: PropPainter
+    follow_id: Optional[str] = None
+    transition: str = "cut"
 
 
 # --------------------------------------------------------------------------- #
@@ -208,26 +212,49 @@ class VideoRenderer:
         n_chars = len(sc.characters)
         for ci, ch in enumerate(sc.characters):
             gait_speed = {"run": 2.10, "sneak": 0.65}.get(ch.gait, WALK_SPEED)
+            # La continuidad solo se activa expresamente y sin entrada desde el exterior.
+            # Los guiones tradicionales siguen empezando donde indica ch.x.
+            previous_scene = self.scenes[-1] if idx > 0 else None
+            previous = None
+            if ch.continue_from_previous and ch.enter == "none" and previous_scene is not None:
+                previous = next((p for p in previous_scene.chars if p.id == ch.id), None)
+            inherited_x = previous.x_at(previous_scene.duration)[0] if previous else ch.x
             others = [o.x for o in sc.characters if o is not ch]
             if ch.facing:
                 face0 = 1 if ch.facing == "right" else -1
+            elif previous:
+                face0 = previous.facing_keys[0][1]
+                for time_key, direction in previous.facing_keys:
+                    if time_key <= previous_scene.duration:
+                        face0 = direction
+                _, _, moving_previous = previous.x_at(max(0.0, previous_scene.duration - 1.0 / self.fps))
+                if moving_previous:
+                    face0 = moving_previous
             elif others:
                 face0 = 1 if sum(others) / len(others) >= ch.x else -1
             else:
                 face0 = 1 if ch.x <= 0.05 else -1
             moves: List[Move] = []
-            x_cur = ch.x
+            x_cur = inherited_x
             off = 1.65 * (self.L.W / 2) / self.L.stage_half
             if ch.enter in ("left", "right"):
                 sx = -off if ch.enter == "left" else off
-                moves.append(Move(0.0, sx, ch.x, abs(ch.x - sx) / gait_speed))
+                moves.append(Move(0.0, sx, ch.x, abs(ch.x - sx) / gait_speed, ch.movement_ease))
+                x_cur = ch.x
                 x_start = sx
             else:
-                x_start = ch.x
+                x_start = inherited_x
             t_free = moves[-1].t0 + moves[-1].dur if moves else 0.0
             pose_keys = [(0.0, get_pose(ch.pose), 0.0)]
             pose_names = [ch.pose]
             expr_keys = [(0.0, get_expression(ch.expression), 0.0)]
+            if previous:
+                # Evita reiniciar bruscamente la pose y la expresión al cambiar de plano.
+                pose_keys = [(0.0, previous.pose_track(previous_scene.duration), 0.0),
+                             (0.0, get_pose(ch.pose), 0.32)]
+                pose_names = [previous.pose_names[-1], ch.pose]
+                expr_keys = [(0.0, previous.expr_track(previous_scene.duration), 0.0),
+                             (0.0, get_expression(ch.expression), 0.22)]
             facing_keys: List[Tuple[float, int]] = [(0.0, face0)]
             jumps: List[float] = []
             last_pose = ch.pose
@@ -247,7 +274,7 @@ class VideoRenderer:
                 if a.move_to is not None and abs(a.move_to - x_cur) > 0.02:
                     t0 = max(ta, t_free)
                     dur = abs(a.move_to - x_cur) / gait_speed
-                    moves.append(Move(t0, x_cur, a.move_to, dur))
+                    moves.append(Move(t0, x_cur, a.move_to, dur, ch.movement_ease))
                     x_cur = a.move_to
                     t_free = t0 + dur
             if ch.pose == "jump":
@@ -256,7 +283,7 @@ class VideoRenderer:
                 ex = -off if ch.exit == "left" else off
                 dur = abs(ex - x_cur) / gait_speed
                 t0 = max(t_free, D - dur - 0.05)
-                moves.append(Move(t0, x_cur, ex, dur))
+                moves.append(Move(t0, x_cur, ex, dur, ch.movement_ease))
             chars.append(CharRuntime(
                 id=ch.id, painter=self._painter(ch.id, theme), x0=x_start, moves=moves,
                 pose_track=Track(pose_keys, angular=True), pose_names=pose_names,
@@ -283,7 +310,9 @@ class VideoRenderer:
             t1 = k.until * D if k.until is not None else (kws[ki + 1].at * D if ki + 1 < len(kws) else D + 1)
             keywords.append((t0, t1, self._keyword_image(k.text, theme)))
         camera = self._camera_keys(sc, D)
-        return SceneRuntime(idx, start, D, bg, theme, chars, props, keywords, camera, PropPainter(theme))
+        follow_id = (sc.speaker if sc.speaker in {c.id for c in chars} else chars[0].id) if (sc.camera == "follow" and chars) else None
+        return SceneRuntime(idx, start, D, bg, theme, chars, props, keywords, camera,
+                            PropPainter(theme), follow_id=follow_id, transition=sc.transition)
 
     def _camera_keys(self, sc, D: float) -> List[dict]:
         cam = sc.camera
@@ -386,9 +415,18 @@ class VideoRenderer:
                               facing=facing, joints=joints, face=face, lift=lift, mouth=mouth,
                               eyes_open=eyes, pop=pop, seat=seat)
 
+    def _camera_values(self, sc: SceneRuntime, t: float) -> dict:
+        """Cámara calculada sin estado; permite pruebas deterministas de seguimiento."""
+        cam = interpolate_keyframes(sc.camera, t, ("zoom", "x", "y"))
+        if sc.follow_id:
+            target = next((cr for cr in sc.chars if cr.id == sc.follow_id), None)
+            if target:
+                cam["x"] = clamp01(0.5 + 0.5 * target.x_at(t)[0]) * 2.0 - 1.0
+        return cam
+
     def _apply_camera(self, c: skia.Canvas, sc: SceneRuntime, t: float) -> None:
         L = self.L
-        cam = interpolate_keyframes(sc.camera, t, ("zoom", "x", "y"))
+        cam = self._camera_values(sc, t)
         fx, fy = L.W / 2, L.ground_y - CHAR_H * L.scale * 0.55
         cx = fx + cam["x"] * L.stage_half
         cy = fy + cam["y"] * CHAR_H * L.scale * 0.5
@@ -533,6 +571,11 @@ class VideoRenderer:
             age = gt - cue.start
             s = 1.0 + 0.07 * (1 - ease_out_cubic(clamp01(age / 0.14)))
             draw_image_centered(c, img, L.W / 2, L.caption_y, s)
+        # Transición por escena, aplicada al fotograma completo y solo cuando se pide.
+        if sc.transition == "fade_from_black" and t < 0.35:
+            opacity = int(round(255 * (1 - smoothstep(0.0, 0.35, t))))
+            c.drawRect(skia.Rect.MakeWH(L.W, L.H),
+                       skia.Paint(AntiAlias=True, Color=skia.ColorSetARGB(opacity, 0, 0, 0)))
         c.restore()
 
     # ------------------------------------------------------------------ #

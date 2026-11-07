@@ -1,0 +1,18 @@
+{
+  "characters": [
+    {
+      "name": "Nora",
+      "appearance": "joven de unos 20 años, complexión delgada, cabello negro corto y despeinado, ojos oscuros grandes, rostro de rasgos anime",
+      "clothing": "sudadera oscura con capucha, camiseta gris, pantalones negros, tenis oscuros",
+      "distinctive_features": "flequillo irregular sobre la frente, silueta reconocible en planos frontales y posteriores",
+      "reference_image": null
+    },
+    {
+      "name": "Guardia",
+      "appearance": "hombre adulto de mediana edad, cabello corto oscuro, rostro preocupado",
+      "clothing": "uniforme de vigilante con gorra oscura y chaqueta funcional",
+      "distinctive_features": "gorra de uniforme, postura defensiva",
+      "reference_image": null
+    }
+  ]
+}

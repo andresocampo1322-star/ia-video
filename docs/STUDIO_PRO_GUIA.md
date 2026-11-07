@@ -117,8 +117,24 @@ vinculación de workflows API; envío y recuperación desde ComfyUI local.
 
 **Pendientes:** generación de hojas de personaje coherentes multiángulo,
 evaluación automática de identidad, control del movimiento y eliminación de
-parpadeos, lipsync semántico, montaje automático con audio para un episodio
-completo y una interfaz visual unificada.
+parpadeos, lipsync semántico, audio/narración automática de la ruta generativa
+y una interfaz visual unificada.
+
+### 4.1. Montaje final de clips que ya generó ComfyUI
+
+Si cada plano produjo un archivo de video compatible y el manifiesto contiene
+un solo archivo de video por plano:
+
+```powershell
+python -m studio_pro assemble --jobs salida_pro/renders/jobs.json --out salida_pro/episodio.mp4
+```
+
+También admite `--clip primero.mp4 --clip segundo.mp4` en orden.
+Usa FFmpeg real. Comprueba que todas las resoluciones coincidan y que todos
+los videos tengan audio o ninguno. Conserva el audio incluido cuando sea
+compatible. NO inventa música, voces ni sincronización labial; no garantiza
+montaje profesional por sí solo. Si un workflow devolvió solo imágenes,
+el programa comunica claramente el error.
 
 Por tanto, **este avance NO equivale a generar automáticamente desde texto
 el video completo de referencia**. Es el cimiento funcional de esa ruta.

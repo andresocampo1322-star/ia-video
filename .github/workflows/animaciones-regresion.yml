@@ -1,7 +1,7 @@
 name: Pruebas de regresion de animaciones
 on:
   pull_request:
-    branches: [main, feat/locomocion-opcional-v1, feat/continuidad-camara-movimiento-v2]
+    branches: [main, feat/locomocion-opcional-v1, feat/continuidad-camara-movimiento-v2, feat/modo-animacion-mejorada-v3]
 concurrency:
   group: animaciones-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -58,5 +58,15 @@ jobs:
           path: |
             artifacts/comparacion-modo-automatico-03/*.mp4
             artifacts/comparacion-modo-automatico-03/*.png
+          if-no-files-found: error
+      - name: Renderizar poses expresivas con Skia original
+        run: python -m tools.preview_expressive_poses
+      - name: Publicar poses expresivas
+        uses: actions/upload-artifact@v4
+        with:
+          name: poses-expresivas-04
+          path: |
+            artifacts/poses-expresivas-04/*.mp4
+            artifacts/poses-expresivas-04/*.png
           if-no-files-found: error
 

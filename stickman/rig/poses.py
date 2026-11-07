@@ -47,6 +47,19 @@ POSES: Dict[str, Joints] = {
     "sad": _pose(spine=-88, neck=20, l_sh=96, l_el=2, r_sh=84, r_el=-2, l_hip=95, r_hip=85),
     "sit": _pose(spine=-94, l_sh=74, l_el=-30, r_sh=64, r_el=-40,
                  l_hip=-6, l_knee=92, r_hip=4, r_knee=84),
+    # Nuevas poses expresivas: se añaden sin cambiar ninguna de las originales.
+    "crouch": _pose(spine=-65, neck=4, l_sh=65, l_el=-35, r_sh=115, r_el=35,
+                    l_hip=10, l_knee=80, r_hip=170, r_knee=-80),
+    "cower": _pose(spine=-74, neck=12, l_sh=-115, l_el=-75, r_sh=-58, r_el=45,
+                   l_hip=80, l_knee=65, r_hip=112, r_knee=55),
+    "stagger": _pose(spine=-81, neck=14, l_sh=136, l_el=18, r_sh=27, r_el=-9,
+                     l_hip=75, l_knee=20, r_hip=108, r_knee=32),
+    "attack": _pose(spine=-65, neck=-10, l_sh=34, l_el=-15, r_sh=-10, r_el=-5,
+                    l_hip=108, l_knee=35, r_hip=55, r_knee=28),
+    "reach": _pose(spine=-89, neck=-4, l_sh=60, l_el=-30, r_sh=-1, r_el=-6,
+                   l_hip=100, r_hip=80),
+    "guard": _pose(spine=-88, neck=3, l_sh=-140, l_el=-25, r_sh=-45, r_el=-70,
+                   l_hip=95, r_hip=85),
 }
 
 # Fases del salto (crouch -> air -> land); se mezclan en scene.py

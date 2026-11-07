@@ -109,7 +109,7 @@ def bind_workflow(graph: dict, bindings: dict, shot: Shot,
             raise ValueError(f"No existe entrada {field_name} del nodo {node_id}")
         if semantic in ("reference_image", "reference_image_2", "reference_image_3",
                         "reference_image_4", "start_frame") and values[semantic] is None:
-            raise ValueError(f"No hay imagen aportada para {semantic}")
+            raise ValueError(f"No hay imagen de referencia aportada para {semantic}")
         # No se sustituyen enlaces entre nodos accidentalmente.
         if isinstance(inputs[field_name], list):
             raise ValueError(f"Binding {semantic} apunta a enlace, no a parámetro literal")

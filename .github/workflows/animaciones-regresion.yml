@@ -16,6 +16,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Instalar bibliotecas graficas Linux para Skia
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libegl1 libgl1 libgles2 libfontconfig1
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip

@@ -1,0 +1,20 @@
+{
+  "characters": [
+    {
+      "id": "alex",
+      "name": "Álex",
+      "appearance": "Hombre joven de 23 años, complexión delgada, cabello negro largo y desordenado, flequillo que cae sobre los ojos, estilo otaku, piel clara y expresión introvertida",
+      "clothing": "Sudadera negra holgada, camiseta gris, pantalón oscuro, tenis negros, audífonos colgados al cuello",
+      "distinctive_features": "Cabello largo que enmarca el rostro; ojeras sutiles; postura encorvada; mantener el mismo rostro y silueta en todos los planos",
+      "reference_image": null
+    },
+    {
+      "id": "vecina",
+      "name": "Vecina",
+      "appearance": "Mujer de mediana edad con piel anormalmente pálida, pelo oscuro revuelto, ojos vidriosos y hundidos, nariz sangrante, rasgos demacrados",
+      "clothing": "Vestido sencillo de estar en casa, cardigan viejo y zapatos domésticos",
+      "distinctive_features": "Palidez marcada, mirada desenfocada y hemorragia nasal progresiva; movimientos torpes, súbitos y agresivos",
+      "reference_image": null
+    }
+  ]
+}

@@ -78,6 +78,8 @@ def main(argv=None) -> int:
     ap.add_argument("--max-segundos", type=float, default=120)
     ap.add_argument("--audio", default=None,
                     help="narración ya grabada (WAV, MP3, MP4...) en lugar de sintetizar la voz; requiere --guion")
+    ap.add_argument("--animacion-mejorada", action="store_true",
+                    help="activar mejoras opcionales de movimiento, continuidad y seguimiento")
     ap.add_argument("--sin-alineacion", action="store_true",
                     help="no alinear los subtítulos con la voz (tiempos estimados por longitud)")
     a = ap.parse_args(argv)
@@ -107,6 +109,9 @@ def main(argv=None) -> int:
                 ap.error("falta la clave de Gemini (--clave o GEMINI_API_KEY). Consíguela gratis en "
                          "https://aistudio.google.com/apikey  — o prueba con --offline")
             script, _, _ = write_script(key, a.tema, a.idioma, a.duracion, a.formato, a.modelo, stats=stats)
+        if a.animacion_mejorada:
+            from .enhance import enhance_script
+            script = enhance_script(script)
         name = a.nombre or _slug(script.title)
         if a.review or a.solo_guion:
             p = out / f"{name}.guion.json"

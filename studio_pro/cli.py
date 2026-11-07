@@ -59,12 +59,35 @@ def _build_parser() -> argparse.ArgumentParser:
     edit.add_argument("--clip", action="append", help="Video en orden; repetir por cada plano")
     edit.add_argument("--out", required=True, help="Archivo MP4 resultante")
     edit.add_argument("--force", action="store_true", help="Sobrescribir salida si ya existe")
+    prod = command.add_parser("produce", help="Generar episodio desde libreto con ComfyUI real")
+    prod.add_argument("--script", required=True, help="Archivo de libreto en texto UTF-8")
+    prod.add_argument("--cast", help="Biblia JSON de personajes con referencias opcionales")
+    prod.add_argument("--config", required=True, help="Configuración de workflows API de ComfyUI")
+    prod.add_argument("--out", default="salida_pro/episodio_nuevo")
+    prod.add_argument("--execute", action="store_true",
+                      help="Generar imagenes y videos con modelos reales; requiere servidor")
+    prod.add_argument("--resume", action="store_true", help="Continuar un trabajo interrumpido")
+    command.add_parser("gui", help="Interfaz de produccion avanzada (no sustituye Stickman)")
     return ap
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = _build_parser()
     args = ap.parse_args(argv)
+    if args.command == "gui":
+        from .gui import main as gui_main
+        gui_main()
+        return 0
+    if args.command == "produce":
+        from .production import produce
+        result = produce(args.script, args.cast, args.config, args.out,
+                         execute=args.execute, resume=args.resume)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result.get("episode"):
+            print("EPISODIO MP4:", result["episode"])
+        else:
+            print("Preflight correcto; sin modelos ejecutados. Usa --execute para render real.")
+        return 0
     if args.command == "skills":
         validate_skill_graph()
         print(json.dumps(get_skills(), ensure_ascii=False, indent=2))

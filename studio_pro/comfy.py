@@ -8,6 +8,7 @@ from __future__ import annotations
 import copy
 import json
 import math
+import mimetypes
 import time
 import uuid
 from pathlib import Path
@@ -18,7 +19,9 @@ from urllib.request import Request, urlopen
 from .core import Shot
 
 SEMANTIC_FIELDS = frozenset(("positive_prompt", "negative_prompt", "seed",
-                             "width", "height", "frames", "reference_image"))
+                             "width", "height", "frames", "reference_image",
+                             "reference_image_2", "reference_image_3",
+                             "reference_image_4", "start_frame"))
 
 
 def local_url(endpoint: str) -> str:
@@ -69,11 +72,15 @@ def dimensions(aspect_ratio: str, resolution: str = "720p") -> tuple[int, int]:
 
 def bind_workflow(graph: dict, bindings: dict, shot: Shot,
                   aspect_ratio: str = "9:16", resolution: str = "720p",
-                  fps: int = 24, reference_filename: str | None = None) -> dict:
+                  fps: int = 24, reference_filename: str | None = None,
+                  reference_images: list[str] | None = None) -> dict:
     """Copia el workflow y aplica únicamente entradas declaradas previamente."""
     if fps <= 0 or fps > 60:
         raise ValueError("fps fuera de rango")
     width, height = dimensions(aspect_ratio, resolution)
+    refs = list(reference_images or [])
+    if reference_filename:
+        refs.insert(0, reference_filename)
     values: dict[str, Any] = {
         "positive_prompt": shot.prompt,
         "negative_prompt": shot.negative_prompt,
@@ -81,7 +88,11 @@ def bind_workflow(graph: dict, bindings: dict, shot: Shot,
         "width": width,
         "height": height,
         "frames": int(math.ceil(shot.duration_seconds * fps)),
-        "reference_image": reference_filename,
+        "reference_image": refs[0] if refs else None,
+        "reference_image_2": refs[1] if len(refs) > 1 else None,
+        "reference_image_3": refs[2] if len(refs) > 2 else None,
+        "reference_image_4": refs[3] if len(refs) > 3 else None,
+        "start_frame": refs[0] if refs else None,
     }
     if "positive_prompt" not in bindings:
         raise ValueError("Sin binding para prompt positivo")
@@ -96,8 +107,9 @@ def bind_workflow(graph: dict, bindings: dict, shot: Shot,
         inputs = output[node_id].get("inputs")
         if not isinstance(inputs, dict) or field_name not in inputs:
             raise ValueError(f"No existe entrada {field_name} del nodo {node_id}")
-        if semantic == "reference_image" and not reference_filename:
-            raise ValueError("La escena no tiene imagen de referencia importada a ComfyUI")
+        if semantic in ("reference_image", "reference_image_2", "reference_image_3",
+                        "reference_image_4", "start_frame") and values[semantic] is None:
+            raise ValueError(f"No hay imagen de referencia aportada para {semantic}")
         # No se sustituyen enlaces entre nodos accidentalmente.
         if isinstance(inputs[field_name], list):
             raise ValueError(f"Binding {semantic} apunta a enlace, no a parámetro literal")
@@ -124,6 +136,43 @@ class ComfyClient:
             return True
         except (OSError, ValueError):
             return False
+
+    def upload_image(self, path: str | Path) -> str:
+        """Carga una referencia existente en ComfyUI/input vía API oficial local.
+
+        Devuelve el nombre que asigna el servidor. No escribe en otras carpetas
+        ni realiza solicitudes a direcciones remotas.
+        """
+        image_path = Path(path)
+        ext = image_path.suffix.lower()
+        if ext not in (".png", ".jpg", ".jpeg", ".webp"):
+            raise ValueError("Referencia admitida: PNG, JPG o WEBP")
+        if not image_path.is_file() or not image_path.stat().st_size:
+            raise FileNotFoundError(f"Falta la imagen de referencia: {image_path}")
+        if image_path.stat().st_size > 24 * 1024 * 1024:
+            raise ValueError("La imagen de referencia supera 24 MB")
+        boundary = "ia_video_" + uuid.uuid4().hex
+        mime = mimetypes.guess_type(image_path.name)[0] or "application/octet-stream"
+        data = image_path.read_bytes()
+        prefix = (f"--{boundary}\r\nContent-Disposition: form-data; "
+                  f'name="image"; filename="{image_path.name}"\r\n'
+                  f"Content-Type: {mime}\r\n\r\n").encode("utf-8")
+        body = prefix + data + (
+            f"\r\n--{boundary}\r\nContent-Disposition: form-data; "
+            'name="type"\r\n\r\ninput'
+            f"\r\n--{boundary}--\r\n"
+        ).encode("utf-8")
+        request = Request(self.endpoint + "/upload/image", data=body, method="POST",
+                          headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+        with urlopen(request, timeout=self.timeout) as response:
+            result = json.loads(response.read().decode("utf-8"))
+        name = result.get("name")
+        subfolder = result.get("subfolder", "")
+        if not isinstance(name, str) or not name or Path(name).name != name:
+            raise RuntimeError("ComfyUI no devolvió un nombre de archivo válido")
+        if subfolder and (not isinstance(subfolder, str) or ".." in Path(subfolder).parts):
+            raise RuntimeError("ComfyUI devolvió una subcarpeta inválida")
+        return (str(subfolder).strip("/") + "/" if subfolder else "") + name
 
     def queue(self, graph: dict) -> str:
         answer = self._request("POST", "/prompt",

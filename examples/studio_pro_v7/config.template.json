@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "title": "Nora - Episodio piloto",
+  "style": "manga_monochrome",
+  "aspect_ratio": "9:16",
+  "resolution": "720p",
+  "fps": 24,
+  "strict_quality": true,
+  "max_shots": 12,
+  "comfy_endpoint": "http://127.0.0.1:8188",
+  "character": {
+    "workflow": "character_api.json",
+    "bindings": "character_bindings.json"
+  },
+  "keyframe": {
+    "workflow": "keyframe_api.json",
+    "bindings": "keyframe_bindings.json"
+  },
+  "video": {
+    "workflow": "video_api.json",
+    "bindings": "video_bindings.json"
+  },
+  "voice": {
+    "engine": "off",
+    "language": "es",
+    "rate": 1
+  }
+}

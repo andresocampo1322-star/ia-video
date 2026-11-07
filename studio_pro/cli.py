@@ -67,6 +67,15 @@ def _build_parser() -> argparse.ArgumentParser:
     prod.add_argument("--execute", action="store_true",
                       help="Generar imagenes y videos con modelos reales; requiere servidor")
     prod.add_argument("--resume", action="store_true", help="Continuar un trabajo interrumpido")
+    original = command.add_parser("original", help="Libre-to-MP4 con Stickman IA original y Piper")
+    original.add_argument("--script", required=True, help="Historia TXT (párrafos = escenas)")
+    original.add_argument("--cast", help="Personajes JSON opcionales")
+    original.add_argument("--out", default="salida/episodio_stickman")
+    original.add_argument("--title", default="Episodio de ia-video")
+    original.add_argument("--fps", type=int, default=24)
+    original.add_argument("--scale", type=float, default=0.65)
+    original.add_argument("--execute", action="store_true",
+                          help="Renderiza con Piper y motor original; por defecto solo valida")
     command.add_parser("gui", help="Interfaz de produccion avanzada (no sustituye Stickman)")
     return ap
 
@@ -74,6 +83,15 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     ap = _build_parser()
     args = ap.parse_args(argv)
+    if args.command == "original":
+        from .original import render_original
+        result = render_original(
+            Path(args.script).read_text(encoding="utf-8"),
+            args.out, cast_file=args.cast, title=args.title,
+            execute=args.execute, fps=args.fps, render_scale=args.scale,
+            log=print, progress=lambda stage, p: print(f"{stage}: {p:.1%}", flush=True))
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
     if args.command == "gui":
         from .gui import main as gui_main
         gui_main()

@@ -84,7 +84,34 @@ def measure_motion(path: str | Path, *, samples: int = 8) -> dict:
             "black_fraction": black_fraction, "warnings": warnings}
 
 
-def check_clip(path: str | Path, expected_seconds: float, *, target_ratio: str = "9:16") -> dict:
+def measure_monochrome(path: str | Path, *, samples: int = 5) -> dict:
+    """Fracción aproximada de píxeles sin saturación cromática.
+
+    Valida la paleta, NO el nivel de detalle, identidad, anatomía ni estética.
+    """
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        raise RuntimeError("ffmpeg debe estar instalado")
+    duration = probe_video(path)["duration"]
+    rate = samples / max(duration, 0.01)
+    raw = _run([ffmpeg, "-hide_banner", "-v", "error", "-i", str(path),
+                "-vf", f"fps={rate:.8f},scale=64:36,format=rgb24",
+                "-frames:v", str(samples), "-f", "rawvideo", "-"],
+               seconds=90).stdout
+    total = len(raw) // 3
+    if total < 200:
+        return {"monochrome_fraction": 0.0, "palette_samples": total}
+    near_gray = 0
+    for i in range(0, total * 3, 3):
+        r, g, b = raw[i], raw[i + 1], raw[i + 2]
+        if max(r, g, b) - min(r, g, b) <= 20:
+            near_gray += 1
+    return {"monochrome_fraction": round(near_gray / total, 4),
+            "palette_samples": total}
+
+
+def check_clip(path: str | Path, expected_seconds: float, *, target_ratio: str = "9:16",
+               style: str | None = None) -> dict:
     info = probe_video(path)
     warnings = []
     planned = max(0.2, float(expected_seconds))
@@ -96,5 +123,12 @@ def check_clip(path: str | Path, expected_seconds: float, *, target_ratio: str =
         warnings.append("La relación de aspecto difiere del guion")
     sample = measure_motion(path)
     warnings.extend(sample.pop("warnings"))
-    return {**info, **sample, "expected_seconds": planned,
+    palette = {}
+    if style == "manga_monochrome":
+        palette = measure_monochrome(path)
+        if palette["monochrome_fraction"] < 0.90:
+            warnings.append(
+                "El clip solicitado como manga monocromático contiene "
+                "demasiados píxeles coloreados")
+    return {**info, **sample, **palette, "expected_seconds": planned,
             "warnings": warnings, "technical_ok": len(warnings) == 0}

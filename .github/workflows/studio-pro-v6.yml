@@ -18,8 +18,10 @@ jobs:
           python-version: '3.12'
       - name: Instalar pytest
         run: python -m pip install 'pytest>=8'
-      - name: Probar biblia, skills, Ollama y ComfyUI sin GPU
-        run: python -m pytest -q tests/test_studio_pro.py
+      - name: Instalar FFmpeg para comprobar montaje
+        run: sudo apt-get install -y ffmpeg
+      - name: Probar skills, ComfyUI y montaje de MP4
+        run: python -m pytest -q tests/test_studio_pro.py tests/test_studio_pro_edit.py
       - name: Crear proyecto de prueba desde libreto
         run: |
           python -m studio_pro skills > /dev/null

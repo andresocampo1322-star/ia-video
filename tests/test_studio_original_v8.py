@@ -84,8 +84,8 @@ def test_renderer_keeps_original_pipeline_and_checks_mp4(monkeypatch, tmp_path):
     assert Path(result["mp4"]).is_file()
     assert inputs["kwargs"]["basename"] == "episodio_stickman"
     assert inputs["kwargs"]["word_align"] is False
-    assert inputs["args"][1] == "9:16"
-    assert inputs["args"][2] == "piper"
+    assert inputs["kwargs"]["fmt"] == "9:16"
+    assert inputs["kwargs"]["engine"] == "piper"
 
 
 def test_no_success_if_renderer_did_not_create_mp4(monkeypatch, tmp_path):

@@ -144,3 +144,11 @@ modelos gratuitos Piper si no están instalados, y depende de las
 dependencias Python originales del proyecto.
 
 `engine: "off"` mantiene el video sin narrador adicional.
+
+## Control técnico de paleta manga
+
+Si el estilo es `manga_monochrome`, se calcula una proporción aproximada de
+píxeles grises mediante muestras reales decodificadas con FFmpeg. Con menos
+del 90 % casi acromático, `strict_quality=true` detiene el episodio antes
+de declarar que cumple el estilo. Esta es una **medida de paleta**, no una
+comprobación de anatomía, identidad o calidad cinematográfica.

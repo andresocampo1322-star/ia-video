@@ -203,6 +203,7 @@ def produce(script_path: str | Path, cast_path: str | Path | None,
 
     cfg_hash = _fingerprint([source_file, config_file] +
                             ([cast_file] if cast_file else []) +
+                            [asset for asset in assets if asset is not None] +
                             [root / cfg[name][field] for name in
                              ("keyframe", "video") + (("character",) if reference_stage else ())
                              for field in ("workflow", "bindings")],
@@ -218,6 +219,13 @@ def produce(script_path: str | Path, cast_path: str | Path | None,
     else:
         state = {"version": 1, "fingerprint": cfg_hash, "status": "prepared",
                  "shots": {}, "characters": {}, "warnings": list(project.warnings)}
+    if resume and state.get("status") == "completed":
+        final = Path(str(state.get("episode", "")))
+        if final.is_file() and final.stat().st_size > 1000:
+            return {"plan": str(plan_path), "shots": len(project.shots),
+                    "characters": len(project.characters), "status_file": str(state_file),
+                    "executed": True, "status": "completed", "episode": str(final),
+                    "resumed": True}
     _save_state(state_file, state)
     result = {"plan": str(plan_path), "shots": len(project.shots),
               "characters": len(project.characters),

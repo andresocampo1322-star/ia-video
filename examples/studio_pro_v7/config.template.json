@@ -19,5 +19,10 @@
   "video": {
     "workflow": "video_api.json",
     "bindings": "video_bindings.json"
+  },
+  "voice": {
+    "engine": "off",
+    "language": "es",
+    "rate": 1
   }
 }

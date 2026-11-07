@@ -194,3 +194,35 @@ def test_resume_rejects_changed_script(tmp_path):
 def test_new_skill_is_honest_about_gpu_dependency():
     status = {s["id"]: s["status"] for s in get_skills()}
     assert status["video.identity_consistency"] == "not_implemented"
+
+def test_comfy_upload_image_uses_real_multipart_crlf(monkeypatch, tmp_path):
+    import studio_pro.comfy as comfy
+
+    image = tmp_path / "nora.png"
+    png(image)
+    requests = []
+
+    class MockResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return None
+        def read(self):
+            return json.dumps({"name": "nora_uploaded.png", "subfolder": "", "type": "input"}).encode()
+
+    def fake_open(req, timeout):
+        requests.append(req)
+        return MockResponse()
+
+    monkeypatch.setattr(comfy, "urlopen", fake_open)
+    client = ComfyClient()
+    name = client.upload_image(image)
+    assert name == "nora_uploaded.png"
+    req = requests[0]
+    assert req.get_method() == "POST"
+    assert req.full_url.endswith("/upload/image")
+    body = req.data
+    assert body.count(bytes((13, 10))) >= 6
+    assert b"Content-Disposition: form-data" in body
+    assert b"name=\"image\"" in body
+    assert b"nora.png" in body

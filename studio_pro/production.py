@@ -188,6 +188,9 @@ def produce(script_path: str | Path, cast_path: str | Path | None,
     assert keyframe_stage and video_stage
     _validate_identity_bindings(project, keyframe_stage, video_stage)
     resolution = str(cfg.get("resolution", "720p"))
+    voice_cfg = cfg.get("voice", {"engine": "off"})
+    if not isinstance(voice_cfg, dict) or voice_cfg.get("engine", "off") not in ("off", "piper"):
+        raise ValueError("voice.engine debe ser 'off' o 'piper'")
     fps = int(cfg.get("fps", 24))
     if fps < 1 or fps > 60:
         raise ValueError("fps permitido: 1 a 60")
@@ -245,6 +248,13 @@ def produce(script_path: str | Path, cast_path: str | Path | None,
     from .core import STYLE_GUIDES
     style_prompt = STYLE_GUIDES[project.style]["positive"]
     try:
+        narrations = {}
+        if voice_cfg.get("engine") == "piper":
+            from .voice import make_narration
+            narrations = make_narration(
+                project.shots, workdir / "narracion",
+                language=str(voice_cfg.get("language", "es")),
+                rate=float(voice_cfg.get("rate", 1.0)))
         for ch in project.characters:
             saved = state["characters"].get(ch.id)
             if saved and Path(saved["asset"]).is_file():
@@ -293,10 +303,17 @@ def produce(script_path: str | Path, cast_path: str | Path | None,
                     f"{shot.id} requiere corrección visual/técnica: " +
                     "; ".join(report["warnings"]) +
                     f". Revisa {shot_dir / 'quality_report.json'}")
-            state["shots"][shot.id] = {"status": "completed", "video": str(video),
-                                         "keyframe": str(keyframe), "quality": report}
+            finished_video = video
+            if shot.id in narrations:
+                from .voice import attach_narration
+                finished_video = attach_narration(
+                    video, narrations[shot.id], shot_dir / "con_voz.mp4")
+            state["shots"][shot.id] = {
+                "status": "completed", "video": str(finished_video),
+                "silent_video": str(video), "keyframe": str(keyframe),
+                "quality": report}
             _save_state(state_file, state)
-            all_clips.append(video)
+            all_clips.append(finished_video)
         final = assemble(all_clips, workdir / "episodio.mp4")
         state["status"] = "completed"
         state["episode"] = str(final)

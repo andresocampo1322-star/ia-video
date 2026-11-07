@@ -19,6 +19,7 @@ import skia
 from .audio import Cue
 from .props import BUBBLES, DESK_TOP, GROUND_PROPS, PropPainter
 from .rig.draw import CharacterFrame, CharacterLook, CharacterPainter, Theme, hex_color, stroke_paint
+from .rig.gaits import run_overlay, sneak_overlay
 from .rig.face import get_expression
 from .rig.poses import JUMP_AIR, JUMP_CROUCH, get_pose, walk_overlay
 from .rig.skeleton import BONES
@@ -82,6 +83,7 @@ class CharRuntime:
     speaker: bool
     last_x: float = 0.0
     hands: Dict[str, Tuple[float, float]] = field(default_factory=dict)
+    gait: str = "walk"
 
     def x_at(self, t: float) -> Tuple[float, float, int]:
         """(x, distancia recorrida acumulada, dirección de movimiento o 0)."""
@@ -205,6 +207,7 @@ class VideoRenderer:
         chars: List[CharRuntime] = []
         n_chars = len(sc.characters)
         for ci, ch in enumerate(sc.characters):
+            gait_speed = {"run": 2.10, "sneak": 0.65}.get(ch.gait, WALK_SPEED)
             others = [o.x for o in sc.characters if o is not ch]
             if ch.facing:
                 face0 = 1 if ch.facing == "right" else -1
@@ -217,7 +220,7 @@ class VideoRenderer:
             off = 1.65 * (self.L.W / 2) / self.L.stage_half
             if ch.enter in ("left", "right"):
                 sx = -off if ch.enter == "left" else off
-                moves.append(Move(0.0, sx, ch.x, abs(ch.x - sx) / WALK_SPEED))
+                moves.append(Move(0.0, sx, ch.x, abs(ch.x - sx) / gait_speed))
                 x_start = sx
             else:
                 x_start = ch.x
@@ -243,7 +246,7 @@ class VideoRenderer:
                     facing_keys.append((ta, 1 if a.facing == "right" else -1))
                 if a.move_to is not None and abs(a.move_to - x_cur) > 0.02:
                     t0 = max(ta, t_free)
-                    dur = abs(a.move_to - x_cur) / WALK_SPEED
+                    dur = abs(a.move_to - x_cur) / gait_speed
                     moves.append(Move(t0, x_cur, a.move_to, dur))
                     x_cur = a.move_to
                     t_free = t0 + dur
@@ -251,7 +254,7 @@ class VideoRenderer:
                 jumps.append(0.2)
             if ch.exit in ("left", "right"):
                 ex = -off if ch.exit == "left" else off
-                dur = abs(ex - x_cur) / WALK_SPEED
+                dur = abs(ex - x_cur) / gait_speed
                 t0 = max(t_free, D - dur - 0.05)
                 moves.append(Move(t0, x_cur, ex, dur))
             chars.append(CharRuntime(
@@ -259,7 +262,7 @@ class VideoRenderer:
                 pose_track=Track(pose_keys, angular=True), pose_names=pose_names,
                 expr_track=Track(expr_keys), facing_keys=facing_keys, jumps=jumps,
                 pop_in=ch.enter == "pop", seed=idx * 7.13 + ci * 3.71,
-                speaker=(sc.speaker == ch.id), last_x=x_start))
+                speaker=(sc.speaker == ch.id), gait=ch.gait, last_x=x_start))
         props: List[PropRuntime] = []
         desks = [p.x for p in sc.props if p.type == "desk"]
         for p in sc.props:
@@ -335,9 +338,14 @@ class VideoRenderer:
         ww = cr.walk_weight(t)
         if ww > 0:
             phase = dist * L.stage_half / (L.scale * 150.0) * math.pi
-            wj = walk_overlay(phase)
+            if cr.gait == "run":
+                wj, bounce = run_overlay(phase), 14.0
+            elif cr.gait == "sneak":
+                wj, bounce = sneak_overlay(phase), 2.0
+            else:
+                wj, bounce = walk_overlay(phase), 7.0
             joints = lerp_dict(joints, {**joints, **wj}, ww, angular=True)
-            lift += abs(math.sin(phase)) * 7 * ww
+            lift += abs(math.sin(phase)) * bounce * ww
         # salto
         for tj in cr.jumps:
             if tj <= t <= tj + JUMP_DUR:

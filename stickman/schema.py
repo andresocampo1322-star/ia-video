@@ -17,7 +17,8 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 POSES = ["idle", "talk", "wave", "point", "think", "shrug", "cheer", "arms_crossed",
-         "present", "sad", "sit", "jump"]
+         "present", "sad", "sit", "jump", "crouch", "cower", "stagger",
+         "attack", "reach", "guard"]
 EXPRESSIONS = ["neutral", "happy", "sad", "surprised", "thinking", "angry"]
 HAIR = ["none", "short", "long", "bun", "ponytail", "curly", "spiky"]
 ACCESSORIES = ["none", "glasses", "cap", "headphones", "tie", "bow"]
@@ -173,7 +174,10 @@ _POSE_ALIAS = {"talking": "talk", "speak": "talk", "standing": "idle", "stand": 
                "pointing": "point", "waving": "wave", "thinking": "think", "celebrate": "cheer",
                "celebrating": "cheer", "crossed": "arms_crossed", "arms-crossed": "arms_crossed",
                "presenting": "present", "explain": "present", "sitting": "sit", "jumping": "jump",
-               "walk": "idle", "walking": "idle", "shrugging": "shrug", "sadness": "sad"}
+               "walk": "idle", "walking": "idle", "shrugging": "shrug", "sadness": "sad",
+               "crouching": "crouch", "scared": "cower", "cowering": "cower",
+               "stumbling": "stagger", "staggering": "stagger", "attacking": "attack",
+               "reaching": "reach", "defending": "guard", "protecting": "guard"}
 _EXPR_ALIAS = {"smile": "happy", "smiling": "happy", "excited": "happy", "joy": "happy",
                "confused": "thinking", "curious": "thinking", "worried": "sad", "shocked": "surprised",
                "surprise": "surprised", "mad": "angry", "frustrated": "angry", "calm": "neutral",

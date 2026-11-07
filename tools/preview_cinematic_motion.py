@@ -63,7 +63,7 @@ def main():
         write_wav(wav, np.zeros(int(SR * sum(durs)), dtype=np.float32))
         try:
             renderer = VideoRenderer(script(enabled), "16:9", durs,
-                                     np.zeros(fps * sum(durs), dtype=np.float32), [],
+                                     np.zeros(round(fps * sum(durs)), dtype=np.float32), [],
                                      fps=fps, render_scale=0.65)
             renderer.render(str(mp4), str(wav))
             for i, frame in enumerate((0, 25, 71, 72, 80, 104, 142)):

@@ -21,7 +21,7 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install --upgrade pip pytest
       - name: Pure Python tests and end-to-end mock ComfyUI
-        run: python -m pytest -q tests/test_studio_pro.py tests/test_studio_pro_edit.py tests/test_production_v7.py tests/test_voice_v7.py
+        run: python -m pytest -q tests/test_studio_pro.py tests/test_studio_pro_edit.py tests/test_production_v7.py tests/test_voice_v7.py tests/test_manga_style_qc_v7.py
       - name: Compile studio modules
         run: python -m compileall -q studio_pro
       - name: Verify original Stickman files unchanged in this PR

@@ -27,6 +27,7 @@ def enhance_script(script: Script) -> Script:
             if moving and ch.movement_ease == "linear":
                 ch.movement_ease = "ease_in_out"
             if (previous is not None and scene.background == previous.background and
+                    scene.environment == previous.environment and
                     ch.enter == "none" and not ch.continue_from_previous):
                 prev_ch = next((p for p in previous.characters if p.id == ch.id), None)
                 if prev_ch is not None and prev_ch.exit == "none":

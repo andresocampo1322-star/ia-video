@@ -19,9 +19,9 @@ montaje FFmpeg, estado en disco, reanudación y GUI nativa Tkinter.
 **NO hemos conseguido aún** un video nuevo con la fidelidad visual de
 `1000221974.mp4`. La calidad la dará el modelo ComfyUI real, sus nodos,
 sus referencias y la evaluación de resultados. Las pruebas con modelos
-simulados comprueban el cableado, no la estética. Tampoco están integrados
-aquí una voz automática actuada ni lipsync, ni una métrica fiable de identidad
-facial. No afirmar que estas partes están listas.
+simulados comprueban el cableado, no la estética. La narración Piper es opcional y utiliza el motor de voz original; no
+ofrece voces dramatizadas por personaje, lipsync ni una métrica fiable de
+identidad facial. No afirmar que estas partes están listas.
 
 ## Configuración de modelos (una vez)
 
@@ -124,3 +124,23 @@ La PR debe superar las pruebas unitarias y de integración, completar un
 video con ComfyUI real, mantener identidad verificable entre planos, pasar
 la revisión visual comparativa, y conservar el motor original tal como
 estaba. Sin demostrarlo, no se fusiona.
+
+## Narración y sonido (opcional)
+
+El campo `voice` del config permite activar la voz Piper original de
+Stickman IA:
+
+```json
+"voice": { "engine": "piper", "language": "es", "rate": 1.0 }
+```
+
+Una vez generado el video de cada escena, Piper sintetiza la narración y
+FFmpeg la agrega sin sustituir los gráficos. Si el clip tiene sonido,
+se reduce su volumen para escuchar la voz. El audio se conserva hasta
+el archivo MP4 final. Si el audio dura más que el plano, se detiene con
+un error claro **en lugar de cortar frases**; debes dividir la narración
+o configurar un workflow que genere más segundos. La voz puede descargar
+modelos gratuitos Piper si no están instalados, y depende de las
+dependencias Python originales del proyecto.
+
+`engine: "off"` mantiene el video sin narrador adicional.

@@ -154,13 +154,13 @@ class ComfyClient:
         boundary = "ia_video_" + uuid.uuid4().hex
         mime = mimetypes.guess_type(image_path.name)[0] or "application/octet-stream"
         data = image_path.read_bytes()
-        prefix = (f"--{boundary}\\r\\nContent-Disposition: form-data; "
-                  f'name="image"; filename="{image_path.name}"\\r\\n'
-                  f"Content-Type: {mime}\\r\\n\\r\\n").encode("utf-8")
+        prefix = (f"--{boundary}\r\nContent-Disposition: form-data; "
+                  f'name="image"; filename="{image_path.name}"\r\n'
+                  f"Content-Type: {mime}\r\n\r\n").encode("utf-8")
         body = prefix + data + (
-            f"\\r\\n--{boundary}\\r\\nContent-Disposition: form-data; "
-            'name="type"\\r\\n\\r\\ninput'
-            f"\\r\\n--{boundary}--\\r\\n"
+            f"\r\n--{boundary}\r\nContent-Disposition: form-data; "
+            'name="type"\r\n\r\ninput'
+            f"\r\n--{boundary}--\r\n"
         ).encode("utf-8")
         request = Request(self.endpoint + "/upload/image", data=body, method="POST",
                           headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})

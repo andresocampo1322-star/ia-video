@@ -46,8 +46,9 @@ SKILLS = (
           ("generated_video",), ("motion_report",)),
     Skill("audio.lipsync", "Sincronizar fonemas y movimiento de boca", "not_implemented",
           ("speech_audio", "character_track"), ("lip_track",)),
-    Skill("editor.assemble", "Montar clips y audio de la producción generativa", "not_implemented",
-          ("shot_clips", "audio"), ("episode.mp4",)),
+    Skill("editor.assemble", "Montar clips compatibles de la producción generativa", "implemented_basic",
+          ("shot_clips",), ("episode.mp4",), (),
+          "Montaje FFmpeg de clips compatibles; no sintetiza audio, no realiza lipsync."),
 )
 
 

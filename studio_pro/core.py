@@ -142,7 +142,7 @@ def split_script(text: str) -> list[str]:
     if len(text) > 100_000:
         raise ValueError("Máximo 100 000 caracteres por proyecto")
     segments = [re.sub(r"\s+", " ", s).strip() for s in
-                re.split(r"\n\s*\n|(?im)^\s*(?:ESCENA|SCENE)\s*\d+\s*[:.-]\s*", text)]
+                re.split(r"\n\s*\n|^\s*(?:ESCENA|SCENE)\s*\d+\s*[:.-]\s*", text, flags=re.I | re.M)]
     segments = [s for s in segments if s]
     if len(segments) == 1 and len(text) > 700:
         sentences = re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])", text)

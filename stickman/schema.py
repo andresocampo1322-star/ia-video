@@ -23,7 +23,7 @@ HAIR = ["none", "short", "long", "bun", "ponytail", "curly", "spiky"]
 ACCESSORIES = ["none", "glasses", "cap", "headphones", "tie", "bow"]
 PROPS = ["laptop", "phone", "coffee", "desk", "chair", "speech_bubble", "thought_bubble",
          "chart", "money", "clock", "lightbulb"]
-CAMERA_PRESETS = ["static", "zoom_in", "zoom_out", "pan_left", "pan_right", "punch_in"]
+CAMERA_PRESETS = ["static", "zoom_in", "zoom_out", "pan_left", "pan_right", "punch_in", "follow"]
 EASES = ["linear", "ease_in_out", "ease_out", "ease_out_back"]
 ENTER = ["none", "left", "right", "pop"]
 EXIT = ["none", "left", "right"]
@@ -92,6 +92,8 @@ class SceneCharacter(_Base):
     exit: Literal[tuple(EXIT)] = "none"  # type: ignore[valid-type]
     pose: Literal[tuple(POSES)] = "idle"  # type: ignore[valid-type]
     gait: Literal["walk", "run", "sneak"] = "walk"
+    movement_ease: Literal["linear", "ease_in_out"] = "linear"
+    continue_from_previous: bool = False
     expression: Literal[tuple(EXPRESSIONS)] = "neutral"  # type: ignore[valid-type]
     actions: List[Action] = Field(default_factory=list, max_length=12)
 
@@ -130,6 +132,7 @@ class Scene(_Base):
     props: List[Prop] = Field(default_factory=list, max_length=6)
     keywords: List[Keyword] = Field(default_factory=list, max_length=3)
     camera: Union[Literal[tuple(CAMERA_PRESETS)], List[CameraKey]] = "static"  # type: ignore[valid-type]
+    transition: Literal["cut", "fade_from_black"] = "cut"
 
     @field_validator("background")
     @classmethod
@@ -273,6 +276,9 @@ def sanitize(raw: Any) -> Tuple[dict, List[str]]:
         else:
             cam = "static"
         s["camera"] = cam
+        s["transition"] = _enum(s.get("transition"), ["cut", "fade_from_black"],
+                                {"fade": "fade_from_black", "none": "cut"},
+                                "cut", f"{where}.transition", w)
         # personajes
         chars = s.get("characters") if isinstance(s.get("characters"), list) else []
         if len(chars) > 3:
@@ -298,6 +304,11 @@ def sanitize(raw: Any) -> Tuple[dict, List[str]]:
                                 "none", f"{cw}.enter", w)
             ch["exit"] = _enum(ch.get("exit"), EXIT, {"walk_left": "left", "walk_right": "right"},
                                "none", f"{cw}.exit", w)
+            ch["movement_ease"] = _enum(ch.get("movement_ease"), ["linear", "ease_in_out"],
+                                         {"smooth": "ease_in_out", "ease": "ease_in_out"},
+                                         "linear", f"{cw}.movement_ease", w)
+            # Booleano explícito: no heredar si la opción está omitida.
+            ch["continue_from_previous"] = ch.get("continue_from_previous") is True
             ch["pose"] = _enum(ch.get("pose"), POSES, _POSE_ALIAS, "idle", f"{cw}.pose", w)
             ch["expression"] = _enum(ch.get("expression"), EXPRESSIONS, _EXPR_ALIAS, "neutral",
                                      f"{cw}.expression", w)

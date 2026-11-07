@@ -29,8 +29,8 @@ def png(path: Path) -> None:
     def chunk(kind, payload):
         data = kind + payload
         return struct.pack(">I", len(payload)) + data + struct.pack(">I", zlib.crc32(data) & 0xFFFFFFFF)
-    raw = b"".join(b"\\x00" + b"\\x85\\x88\\x99" * 16 for _ in range(16))
-    body = b"\\x89PNG\\r\\n\\x1a\\n" + chunk(b"IHDR",
+    raw = b"".join(b"\x00" + b"\x85\x88\x99" * 16 for _ in range(16))
+    body = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR",
         struct.pack(">IIBBBBB", 16, 16, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
     path.write_bytes(body)
 
@@ -64,7 +64,7 @@ def setup(tmp_path):
     config_path = root / "production.json"
     config_path.write_text(json.dumps(cfg))
     script = tmp_path / "story.txt"
-    script.write_text("Nora camina por la calle.\\n\\nNora entra al supermercado.", encoding="utf-8")
+    script.write_text("Nora camina por la calle.\n\nNora entra al supermercado.", encoding="utf-8")
     cast = tmp_path / "cast.json"
     cast.write_text(json.dumps({"characters": [{
         "name": "Nora", "appearance": "pelo negro corto",

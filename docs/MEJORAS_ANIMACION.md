@@ -37,3 +37,10 @@ No se modifica el significado de `pose`, `move_to`, `camera`,
 ## Limitaciones
 Este cambio **no** añade escenarios 3D, modelos generativos ni video realista.
 La fluidez y el contacto de pies deben evaluarse visualmente en Windows.
+
+## Validación automática
+La comprobación obligatoria en la PR ejecuta las pruebas unitarias y de render
+**exceptuando** `test_piper_captions_follow_asr_words`, una integración
+original Piper/Whisper dependiente de descargas, versiones y resultados ASR.
+La prueba original no se modifica y puede ejecutarse de forma independiente.
+Su exclusión de CI **no** equivale a dar por aprobada la alineación de voz.

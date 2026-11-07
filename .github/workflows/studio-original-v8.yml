@@ -45,3 +45,17 @@ jobs:
             artifacts/la_vecina_mp4/*.srt
             artifacts/la_vecina_mp4/*.json
           if-no-files-found: error
+      - name: Episodio completo La vecina - doce escenas con voz
+        run: |
+          python -m studio_pro original --script examples/la_vecina/historia.txt --cast examples/la_vecina/personajes.json --out artifacts/la_vecina_completo --title "La vecina - Episodio completo" --fps 12 --scale 0.35 --execute
+          test -s artifacts/la_vecina_completo/episodio_stickman.mp4
+          ffprobe -v error -show_entries format=duration -of default=nw=1 artifacts/la_vecina_completo/episodio_stickman.mp4
+      - name: Publicar episodio completo MP4, SRT y guion
+        uses: actions/upload-artifact@v4
+        with:
+          name: la-vecina-episodio-completo-original
+          path: |
+            artifacts/la_vecina_completo/*.mp4
+            artifacts/la_vecina_completo/*.srt
+            artifacts/la_vecina_completo/*.json
+          if-no-files-found: error

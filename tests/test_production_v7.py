@@ -40,7 +40,7 @@ def setup(tmp_path):
     root.mkdir()
     cfg = {
         "version": 1, "title": "Prueba end to end",
-        "style": "manga_monochrome", "aspect_ratio": "9:16",
+        "style": "anime_color", "aspect_ratio": "9:16",
         "fps": 12, "resolution": "540p", "strict_quality": True,
     }
     for stage in ("character", "keyframe", "video"):

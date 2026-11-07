@@ -81,9 +81,9 @@ class CharRuntime:
     pop_in: bool
     seed: float
     speaker: bool
-    gait: str = "walk"
     last_x: float = 0.0
     hands: Dict[str, Tuple[float, float]] = field(default_factory=dict)
+    gait: str = "walk"
 
     def x_at(self, t: float) -> Tuple[float, float, int]:
         """(x, distancia recorrida acumulada, dirección de movimiento o 0)."""

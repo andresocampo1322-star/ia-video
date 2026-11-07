@@ -24,6 +24,7 @@ from .rig.face import get_expression
 from .rig.poses import JUMP_AIR, JUMP_CROUCH, get_pose, walk_overlay
 from .rig.skeleton import BONES
 from .schema import Script, background_hex
+from .scenery import draw_scenery, draw_atmosphere
 from .text import draw_image_centered, fit_font, font, render_outlined, text_width
 from .tween import (Track, clamp01, ease_in_out_cubic, ease_out_back, ease_out_cubic, hash01,
                     interpolate_keyframes, lerp, lerp_dict, smoothstep)
@@ -137,6 +138,8 @@ class SceneRuntime:
     prop_painter: PropPainter
     follow_id: Optional[str] = None
     transition: str = "cut"
+    environment: str = "none"
+    atmosphere: str = "none"
 
 
 # --------------------------------------------------------------------------- #
@@ -312,7 +315,8 @@ class VideoRenderer:
         camera = self._camera_keys(sc, D)
         follow_id = (sc.speaker if sc.speaker in {c.id for c in chars} else chars[0].id) if (sc.camera == "follow" and chars) else None
         return SceneRuntime(idx, start, D, bg, theme, chars, props, keywords, camera,
-                            PropPainter(theme), follow_id=follow_id, transition=sc.transition)
+                            PropPainter(theme), follow_id=follow_id, transition=sc.transition,
+                            environment=sc.environment, atmosphere=sc.atmosphere)
 
     def _camera_keys(self, sc, D: float) -> List[dict]:
         cam = sc.camera
@@ -533,6 +537,8 @@ class VideoRenderer:
         # escenario con cámara
         c.save()
         self._apply_camera(c, sc, t)
+        if sc.environment != "none":
+            draw_scenery(c, sc.environment, L.W, L.H, L.ground_y, sc.bg)
         gl = stroke_paint(hex_color(sc.theme.ink, 0.10), 4)
         c.drawLine(-L.W, L.ground_y + 2, L.W * 2, L.ground_y + 2, gl)
         frames: Dict[str, Tuple[CharRuntime, CharacterFrame]] = {}
@@ -552,6 +558,8 @@ class VideoRenderer:
         for p in rest:
             if p not in behind:
                 self._draw_prop(c, sc, p, t, frames)
+        if sc.atmosphere != "none":
+            draw_atmosphere(c, sc.atmosphere, L.W, L.H, L.ground_y, t, sc.bg)
         c.restore()
         # textos clave (pantalla)
         for t0, t1, img in sc.keywords:

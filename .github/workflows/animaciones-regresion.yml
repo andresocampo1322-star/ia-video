@@ -1,7 +1,7 @@
 name: Pruebas de regresion de animaciones
 on:
   pull_request:
-    branches: [main, feat/locomocion-opcional-v1, feat/continuidad-camara-movimiento-v2, feat/modo-animacion-mejorada-v3]
+    branches: [main, feat/locomocion-opcional-v1, feat/continuidad-camara-movimiento-v2, feat/modo-animacion-mejorada-v3, feat/poses-expresivas-v4]
 concurrency:
   group: animaciones-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -68,5 +68,15 @@ jobs:
           path: |
             artifacts/poses-expresivas-04/*.mp4
             artifacts/poses-expresivas-04/*.png
+          if-no-files-found: error
+      - name: Renderizar y comparar escenarios vectoriales
+        run: python -m tools.preview_scenery
+      - name: Publicar comparacion de escenarios
+        uses: actions/upload-artifact@v4
+        with:
+          name: escenarios-vectoriales-05
+          path: |
+            artifacts/escenarios-vectoriales-05/*.mp4
+            artifacts/escenarios-vectoriales-05/*.png
           if-no-files-found: error
 

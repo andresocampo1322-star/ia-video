@@ -291,6 +291,7 @@ class PreviewIn(BaseModel):
 
 class RenderIn(BaseModel):
     script: Any
+    animacion_mejorada: bool = False
     formato: str = "9:16"
     motor: str = "auto"
     voz: str = gemini.DEFAULT_VOICE
@@ -402,6 +403,9 @@ def render(body: RenderIn, req: Request) -> dict:
         script, _ = validate_script(body.script)
     except ScriptError as e:
         raise HTTPException(422, str(e))
+    if body.animacion_mejorada:
+        from stickman.enhance import enhance_script
+        script = enhance_script(script)
     if body.formato not in ("9:16", "16:9"):
         raise HTTPException(400, "Formato no válido")
     if body.motor not in ("auto", "gemini", "piper"):

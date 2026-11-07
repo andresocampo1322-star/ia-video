@@ -168,7 +168,8 @@ def build_original_script(text: str, *,
                 "actions": acts,
             })
         events = []
-        if "televisi" in low or "noticiero" in low or "televisor" in low:
+        if any(v in low for v in ("televisi", "noticiero", "televisor",
+                                   "emergencia", "disturbios", "noticias", "alerta")):
             events.append({"text": "ALERTA DE EMERGENCIA", "at": 0.15, "until": 0.65})
         elif "nariz" in low and "sangre" in low:
             events.append({"text": "ALGO NO ESTÁ BIEN", "at": 0.45, "until": 0.82})

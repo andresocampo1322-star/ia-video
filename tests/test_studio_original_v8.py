@@ -31,7 +31,7 @@ def test_story_builds_12_scenes_and_two_persistent_identities():
 def test_story_contains_television_attack_chase_and_fence_leap():
     script = build_original_script(STORY.read_text(encoding="utf-8"), cast_file=CAST)
     assert script.scenes[0].environment == "room"
-    assert script.scenes[0].keywords == []
+    assert any("ALERTA DE EMERGENCIA" in k.text for k in script.scenes[0].keywords)
     assert any("ALERTA DE EMERGENCIA" in k.text for k in script.scenes[1].keywords)
     assert any("ALGO NO ESTÁ BIEN" in k.text for k in script.scenes[6].keywords)
     assert any(c.pose == "stagger" or c.gait == "sneak"

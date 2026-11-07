@@ -1,0 +1,18 @@
+{
+  "positive_prompt": {
+    "node": "CLIP_POSITIVE_ID",
+    "input": "text"
+  },
+  "negative_prompt": {
+    "node": "CLIP_NEGATIVE_ID",
+    "input": "text"
+  },
+  "seed": {
+    "node": "SAMPLER_ID",
+    "input": "seed"
+  },
+  "frames": {
+    "node": "VIDEO_FRAMES_NODE_ID",
+    "input": "length"
+  }
+}\n

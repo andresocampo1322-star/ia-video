@@ -1,0 +1,33 @@
+name: Studio Pro - skills y produccion generativa
+on:
+  pull_request:
+    branches:
+      - feat/escenarios-atmosfera-vectorial-v5
+      - main
+permissions:
+  contents: read
+jobs:
+  production-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar pytest
+        run: python -m pip install 'pytest>=8'
+      - name: Probar biblia, skills, Ollama y ComfyUI sin GPU
+        run: python -m pytest -q tests/test_studio_pro.py
+      - name: Crear proyecto de prueba desde libreto
+        run: |
+          python -m studio_pro skills > /dev/null
+          python -m studio_pro plan --script examples/production_story.txt --cast examples/production_cast.json --style manga_monochrome --format 9:16 --out artifacts/studio_pro_plan
+          test -s artifacts/studio_pro_plan/production_plan.json
+      - name: Adjuntar plan de produccion reproducible
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-pro-plan-v6
+          path: artifacts/studio_pro_plan/
+          if-no-files-found: error

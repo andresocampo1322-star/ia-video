@@ -44,3 +44,10 @@ La comprobación obligatoria en la PR ejecuta las pruebas unitarias y de render
 original Piper/Whisper dependiente de descargas, versiones y resultados ASR.
 La prueba original no se modifica y puede ejecutarse de forma independiente.
 Su exclusión de CI **no** equivale a dar por aprobada la alineación de voz.
+
+## Videos comparativos
+El flujo de GitHub Actions produce los MP4 `walk.mp4`, `run.mp4` y
+`sneak.mp4` con el **mismo renderizador del proyecto** y un audio de prueba
+silencioso; no son animatics alternativos. Se obtienen desde la ejecución
+exitosa en Actions, artefacto `comparacion-animaciones-01`.
+La inspección visual humana sigue siendo obligatoria antes de fusionar.

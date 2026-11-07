@@ -1,6 +1,6 @@
 """Genera comparaciones MP4 reales usando VideoRenderer, sin IA externa ni TTS.
 
-Uso: python tools/preview_locomotion.py
+Uso: python -m tools.preview_locomotion
 Los resultados se guardan bajo artifacts/comparacion-animaciones-01/.
 """
 from __future__ import annotations

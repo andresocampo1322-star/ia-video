@@ -61,8 +61,21 @@ class StudioProUI(tk.Tk):
                   style="Header.TLabel").pack(anchor="w")
         ttk.Label(
             frame, style="Studio.TLabel",
-            text="Conserva Stickman IA. Generación neural solo con workflows y modelos ComfyUI configurados."
+            text="Modo original: genera MP4 con Stickman + Piper, sin ComfyUI. Modo neuronal: experimental."
         ).pack(anchor="w", pady=(3, 12))
+        self.mode = tk.StringVar(value="original")
+        modes = ttk.Frame(frame, style="Studio.TFrame")
+        modes.pack(fill="x", pady=(0, 10))
+        for caption, value in (
+            ("Motor original Stickman IA 2D — sin configuración", "original"),
+            ("Motor neuronal Pro — requiere ComfyUI", "neural"),
+        ):
+            button = tk.Radiobutton(
+                modes, text=caption, variable=self.mode, value=value,
+                bg=self.BG, fg=self.FG, selectcolor=self.MID,
+                activebackground=self.BG, activeforeground=self.ACCENT,
+                font=("Segoe UI", 10))
+            button.pack(anchor="w")
 
         top = ttk.Frame(frame, style="Studio.TFrame")
         top.pack(fill="x")
@@ -70,7 +83,7 @@ class StudioProUI(tk.Tk):
         self.cast_path = tk.StringVar()
         self.output_path = tk.StringVar(value=str(Path.home() / "Videos" / "ia-video" / "episodio_01"))
         for caption, var, kind in (
-            ("Configuración de modelos JSON", self.config_path, "file"),
+            ("Configuración de modelos (solo Pro)", self.config_path, "file"),
             ("Biblia de personajes JSON (opcional)", self.cast_path, "file"),
             ("Carpeta del proyecto y MP4", self.output_path, "dir"),
         ):
@@ -90,13 +103,18 @@ class StudioProUI(tk.Tk):
                               height=11, undo=True)
         self.editor.pack(fill="both", expand=True)
         self.editor.insert("1.0",
-                           "Nora despierta al escuchar un ruido en la ventana.\n\n"
-                           "Nora sale a la calle bajo la lluvia.\n\n"
-                           "Nora llega al supermercado y observa a las personas correr.")
+                           "Un joven de cabello largo ve una alerta de emergencia en la televisión.\\n\\n"
+                           "Abre la nevera: no tiene comida.\\n\\n"
+                           "La vecina pálida le abre la puerta y comienza a sangrar por la nariz.\\n\\n"
+                           "La vecina lo ataca y el joven huye, salta dos cercas y logra escapar.")
         buttons = ttk.Frame(frame, style="Studio.TFrame")
         buttons.pack(fill="x", pady=(12, 8))
+        self.demo_button = ttk.Button(
+            buttons, text="Cargar historia zombi", style="Secondary.TButton",
+            command=self._load_demo)
+        self.demo_button.pack(side="left", padx=(0, 7))
         self.check_button = ttk.Button(
-            buttons, text="1. VALIDAR GUIÓN Y MODELOS", style="Secondary.TButton",
+            buttons, text="1. VALIDAR GUIÓN", style="Secondary.TButton",
             command=lambda: self._start(False))
         self.check_button.pack(side="left", padx=(0, 7))
         self.go_button = ttk.Button(
@@ -114,7 +132,21 @@ class StudioProUI(tk.Tk):
         self.log = tk.Text(frame, bg="#101620", fg="#BACADB", font=("Consolas", 9),
                            height=8, relief="flat", wrap="word", state="disabled")
         self.log.pack(fill="x")
-        self._log("La calidad depende del modelo de imagen/video. Una validación no es un render.")
+        self._log("Motor original: animación vectorial 2D del repositorio, voz Piper y MP4 real.")
+        self._log("Motor Pro: pendiente de modelos generativos reales; no promete anime sin GPU.")
+
+    def _load_demo(self) -> None:
+        root = Path(__file__).resolve().parents[1] / "examples" / "la_vecina"
+        story = root / "historia.txt"
+        cast = root / "personajes.json"
+        if not story.is_file() or not cast.is_file():
+            messagebox.showerror("Ejemplo no disponible", str(root))
+            return
+        self.editor.delete("1.0", "end")
+        self.editor.insert("1.0", story.read_text(encoding="utf-8"))
+        self.cast_path.set(str(cast))
+        self._log("Cargada 'La vecina': guion y personajes preparados.")
+        self.status.set("Historia zombi cargada. Puedes validar o generar el MP4 con Stickman IA.")
 
     def _browse(self, var: tk.StringVar, kind: str) -> None:
         if kind == "dir":
@@ -151,10 +183,12 @@ class StudioProUI(tk.Tk):
         if not content:
             messagebox.showwarning("Falta libreto", "Escribe una historia primero.")
             return
+        mode = self.mode.get()
         config = Path(self.config_path.get().strip()).expanduser()
-        if not config.is_file():
+        if mode == "neural" and not config.is_file():
             messagebox.showwarning(
-                "Faltan modelos", "Selecciona un JSON de configuración con workflows reales.")
+                "Faltan modelos", "Para el modo neuronal selecciona un JSON de ComfyUI real. "
+                "Para generar ahora sin ComfyUI selecciona Motor original Stickman IA.")
             return
         cast_value = self.cast_path.get().strip()
         if cast_value and not Path(cast_value).is_file():
@@ -163,7 +197,7 @@ class StudioProUI(tk.Tk):
         out = Path(self.output_path.get().strip()).expanduser()
         if not str(out).strip():
             return
-        if execute and not messagebox.askyesno(
+        if execute and mode == "neural" and not messagebox.askyesno(
             "Confirmar generación real",
             "¿Ejecutar modelos ComfyUI para crear imágenes y videos?\n"
             "Esto puede consumir bastante GPU, electricidad o créditos "
@@ -177,12 +211,23 @@ class StudioProUI(tk.Tk):
         self.go_button.configure(state="disabled")
         self.status.set("Procesando..." if execute else "Validando configuración...")
         self.progress.start(12)
-        self._log("Modo " + ("GENERACIÓN REAL" if execute else "VALIDACIÓN") + " iniciado")
+        self._log(("Stickman IA original" if mode == "original" else "Motor neuronal Pro")
+                  + " — " + ("RENDER MP4" if execute else "VALIDACIÓN") + " iniciado")
         def worker() -> None:
             try:
-                result = produce(
-                    script_file, cast_value or None, config, out,
-                    execute=execute, resume=True)
+                if mode == "original":
+                    from .original import render_original
+                    def report(stage: str, fraction: float) -> None:
+                        self.queue.put(("progress", f"{stage}: {fraction:.0%}"))
+                    result = render_original(
+                        content, out, cast_file=cast_value or None,
+                        execute=execute,
+                        log=lambda msg: self.queue.put(("log", str(msg))),
+                        progress=report)
+                else:
+                    result = produce(
+                        script_file, cast_value or None, config, out,
+                        execute=execute, resume=True)
                 self.queue.put(("success", json.dumps(result, ensure_ascii=False, indent=2)))
             except Exception as exc:
                 self.queue.put(("error", f"{type(exc).__name__}: {exc}"))
@@ -192,9 +237,22 @@ class StudioProUI(tk.Tk):
         try:
             while True:
                 label, message = self.queue.get_nowait()
+                if label == "progress":
+                    self.status.set(message)
+                    continue
                 self._log(message)
+                if label == "log":
+                    continue
                 if label == "success":
-                    self.status.set("Proceso completado; revisa la carpeta del episodio.")
+                    data = json.loads(message)
+                    media = data.get("mp4") or data.get("episode")
+                    if media and Path(media).is_file():
+                        self.status.set("MP4 generado correctamente: " + str(media))
+                        messagebox.showinfo("EPISODIO LISTO", f"Video generado en:\\n{media}")
+                    elif data.get("status") == "validated" or data.get("executed") is False:
+                        self.status.set("Guion validado; aún no se ha generado video.")
+                    else:
+                        self.status.set("Proceso finalizado. No se confirmó un archivo MP4.")
                 else:
                     self.status.set("Error detectado — consulta el registro.")
                     messagebox.showerror("Producción interrumpida", message[:900])
@@ -204,7 +262,7 @@ class StudioProUI(tk.Tk):
                 self.go_button.configure(state="normal")
         except queue.Empty:
             pass
-        if self.busy:
+        if self.busy and self.mode.get() == "neural":
             self._inspect_state()
         self.after(350, self._drain)
 

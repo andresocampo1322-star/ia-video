@@ -1,0 +1,61 @@
+name: Motor original Studio Pro - MP4 sin ComfyUI
+on:
+  pull_request:
+    branches:
+      - feat/pipeline-automatico-referencias-v7
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stickman-mp4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Sistema de render vectorial
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg libegl1 libgl1 libgles2 libfontconfig1
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-studio-local.txt pytest
+      - name: Integridad del motor original y sintaxis Python
+        run: |
+          python -m compileall -q studio_pro
+          if git diff --name-only origin/feat/pipeline-automatico-referencias-v7...HEAD | grep -q '^stickman/'; then
+            echo "ERROR: se modificaron archivos del motor original"; exit 1
+          fi
+      - name: Pruebas del adaptador y salida MP4 real
+        run: python -m pytest -q tests/test_studio_original_v8.py
+      - name: Render de ejemplo La vecina con voz Piper y Skia
+        run: |
+          python -m studio_pro original --script examples/la_vecina/avance_corto.txt --cast examples/la_vecina/personajes.json --out artifacts/la_vecina_mp4 --title "La vecina - Prueba original" --fps 12 --scale 0.35 --execute
+          test -s artifacts/la_vecina_mp4/episodio_stickman.mp4
+          ffprobe -v error -show_entries format=duration -of default=nw=1 artifacts/la_vecina_mp4/episodio_stickman.mp4
+      - name: Publicar video real, SRT y guion
+        uses: actions/upload-artifact@v4
+        with:
+          name: la-vecina-stickman-original-mp4
+          path: |
+            artifacts/la_vecina_mp4/*.mp4
+            artifacts/la_vecina_mp4/*.srt
+            artifacts/la_vecina_mp4/*.json
+          if-no-files-found: error
+      - name: Episodio completo La vecina - doce escenas con voz
+        run: |
+          python -m studio_pro original --script examples/la_vecina/historia.txt --cast examples/la_vecina/personajes.json --out artifacts/la_vecina_completo --title "La vecina - Episodio completo" --fps 12 --scale 0.35 --execute
+          test -s artifacts/la_vecina_completo/episodio_stickman.mp4
+          ffprobe -v error -show_entries format=duration -of default=nw=1 artifacts/la_vecina_completo/episodio_stickman.mp4
+      - name: Publicar episodio completo MP4, SRT y guion
+        uses: actions/upload-artifact@v4
+        with:
+          name: la-vecina-episodio-completo-original
+          path: |
+            artifacts/la_vecina_completo/*.mp4
+            artifacts/la_vecina_completo/*.srt
+            artifacts/la_vecina_completo/*.json
+          if-no-files-found: error

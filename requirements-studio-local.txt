@@ -1,0 +1,6 @@
+# Ruta de animación Stickman IA 2D de Studio Pro sin ComfyUI
+skia-python>=87.6
+numpy>=1.26
+pydantic>=2.5
+PyYAML>=6.0
+piper-tts>=1.3.0

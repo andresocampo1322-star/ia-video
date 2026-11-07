@@ -13,15 +13,15 @@ def run_overlay(phase: float) -> Dict[str, float]:
     """Carrera: zancada y braceo más amplios, leve inclinación hacia delante."""
     s, c = math.sin(phase), math.cos(phase)
     return {
-        "l_hip": 90 + 43 * s,
-        "r_hip": 90 - 43 * s,
-        "l_knee": max(0.0, -c) * 62,
-        "r_knee": max(0.0, c) * 62,
-        "l_sh": 90 - 44 * s,
-        "r_sh": 90 + 44 * s,
-        "l_el": -38,
-        "r_el": -38,
-        "spine": -82.0,
+        "l_hip": 90 + 34 * s,
+        "r_hip": 90 - 34 * s,
+        "l_knee": max(0.0, -c) * 54,
+        "r_knee": max(0.0, c) * 54,
+        "l_sh": 90 - 37 * s,
+        "r_sh": 90 + 37 * s,
+        "l_el": -36,
+        "r_el": -36,
+        "spine": -83.0,
     }
 
 
@@ -31,11 +31,11 @@ def sneak_overlay(phase: float) -> Dict[str, float]:
     return {
         "l_hip": 90 + 15 * s,
         "r_hip": 90 - 15 * s,
-        "l_knee": 20 + max(0.0, -c) * 24,
-        "r_knee": 20 + max(0.0, c) * 24,
-        "l_sh": 90 - 9 * s,
-        "r_sh": 90 + 9 * s,
-        "l_el": -24,
-        "r_el": -24,
-        "spine": -86.0,
+        "l_knee": 30 + max(0.0, -c) * 18,
+        "r_knee": 30 + max(0.0, c) * 18,
+        "l_sh": 75 - 10 * s,
+        "r_sh": 75 + 10 * s,
+        "l_el": -48,
+        "r_el": -48,
+        "spine": -76.0,
     }

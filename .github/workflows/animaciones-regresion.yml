@@ -1,7 +1,7 @@
 name: Pruebas de regresion de animaciones
 on:
   pull_request:
-    branches: [main, feat/locomocion-opcional-v1]
+    branches: [main, feat/locomocion-opcional-v1, feat/continuidad-camara-movimiento-v2]
 concurrency:
   group: animaciones-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -48,5 +48,15 @@ jobs:
           path: |
             artifacts/comparacion-cinematica-02/*.mp4
             artifacts/comparacion-cinematica-02/*.png
+          if-no-files-found: error
+      - name: Renderizar modo original versus animacion mejorada
+        run: python -m tools.preview_auto_enhance
+      - name: Publicar videos comparativos del modo mejorado
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparacion-modo-automatico-03
+          path: |
+            artifacts/comparacion-modo-automatico-03/*.mp4
+            artifacts/comparacion-modo-automatico-03/*.png
           if-no-files-found: error
 

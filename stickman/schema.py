@@ -25,6 +25,8 @@ ACCESSORIES = ["none", "glasses", "cap", "headphones", "tie", "bow"]
 PROPS = ["laptop", "phone", "coffee", "desk", "chair", "speech_bubble", "thought_bubble",
          "chart", "money", "clock", "lightbulb"]
 CAMERA_PRESETS = ["static", "zoom_in", "zoom_out", "pan_left", "pan_right", "punch_in", "follow"]
+ENVIRONMENTS = ["none", "street", "room", "supermarket", "forest"]
+ATMOSPHERES = ["none", "rain", "snow", "fog"]
 EASES = ["linear", "ease_in_out", "ease_out", "ease_out_back"]
 ENTER = ["none", "left", "right", "pop"]
 EXIT = ["none", "left", "right"]
@@ -129,6 +131,8 @@ class Scene(_Base):
     narration: str = Field(..., min_length=1, max_length=700)
     speaker: Optional[str] = None
     background: str = "papel"
+    environment: Literal[tuple(ENVIRONMENTS)] = "none"  # type: ignore[valid-type]
+    atmosphere: Literal[tuple(ATMOSPHERES)] = "none"  # type: ignore[valid-type]
     characters: List[SceneCharacter] = Field(default_factory=list, max_length=3)
     props: List[Prop] = Field(default_factory=list, max_length=6)
     keywords: List[Keyword] = Field(default_factory=list, max_length=3)
@@ -254,6 +258,12 @@ def sanitize(raw: Any) -> Tuple[dict, List[str]]:
             w.append(f"{where}.background: {bg!r} no válido, uso 'papel'")
             bg = "papel"
         s["background"] = bg
+        s["environment"] = _enum(s.get("environment"), ENVIRONMENTS,
+                                  {"city": "street", "market": "supermarket", "interior": "room"},
+                                  "none", f"{where}.environment", w)
+        s["atmosphere"] = _enum(s.get("atmosphere"), ATMOSPHERES,
+                                 {"lluvia": "rain", "nieve": "snow", "niebla": "fog"},
+                                 "none", f"{where}.atmosphere", w)
         # keywords: acepta string, lista de strings o lista de objetos
         kws = s.get("keywords", s.pop("keyword", None))
         if isinstance(kws, str):

@@ -128,6 +128,9 @@
       <option value="auto">Gemini (si falla, voz local)</option>
       <option value="piper">Voz local Piper (sin clave)</option>
     </select>
+    <label class="check"><input type="checkbox" id="animacion-mejorada">
+      Animación mejorada (experimental): aceleración suave, continuidad y cámara de seguimiento.
+      El modo clásico permanece disponible si se deja desactivado.</label>
     <audio id="audio-voz" controls preload="none" class="hidden"></audio>
     <div id="msg-voz" class="msg hidden"></div>
     <div class="actions">
@@ -356,7 +359,8 @@
     try {
       const motor = $('motor').value === 'piper' || !key() || $('m-tts').value === '' && !$('modelos').classList.contains('hidden') ? 'piper' : 'auto';
       const r = await api('api/render', {script, formato: formato(), motor, voz: $('voz').value,
-        clave: motor === 'piper' ? null : key(), modelo_tts: $('m-tts').value || null});
+        clave: motor === 'piper' ? null : key(), modelo_tts: $('m-tts').value || null,
+        animacion_mejorada: $('animacion-mejorada').checked});
       track(r.id);
     } catch (e) { show($('msg-render'), e.message, true); b.disabled = false; }
   };

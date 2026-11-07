@@ -91,6 +91,7 @@ class SceneCharacter(_Base):
     enter: Literal[tuple(ENTER)] = "none"  # type: ignore[valid-type]
     exit: Literal[tuple(EXIT)] = "none"  # type: ignore[valid-type]
     pose: Literal[tuple(POSES)] = "idle"  # type: ignore[valid-type]
+    gait: Literal["walk", "run", "sneak"] = "walk"
     expression: Literal[tuple(EXPRESSIONS)] = "neutral"  # type: ignore[valid-type]
     actions: List[Action] = Field(default_factory=list, max_length=12)
 

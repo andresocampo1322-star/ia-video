@@ -295,7 +295,8 @@ def produce(script_path: str | Path, cast_path: str | Path | None,
             video, _, _ = _run_stage(
                 worker, video_stage, motion, shot_dir / "motion",
                 project.aspect_ratio, resolution, fps, refs=[starter])
-            report = check_clip(video, shot.duration_seconds, target_ratio=project.aspect_ratio)
+            report = check_clip(video, shot.duration_seconds, target_ratio=project.aspect_ratio,
+                                style=project.style)
             (shot_dir / "quality_report.json").write_text(
                 json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
             if report["warnings"] and bool(cfg.get("strict_quality", True)):

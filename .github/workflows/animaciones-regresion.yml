@@ -28,3 +28,14 @@ jobs:
         # La prueba Piper+Whisper descarga modelos externos y puede variar
         # decimas por ASR entre ejecuciones; se conserva en el repositorio.
         run: python -m pytest -q -k "not test_piper_captions_follow_asr_words"
+      - name: Renderizar comparaciones MP4 del motor original
+        run: |
+          sudo apt-get install -y ffmpeg
+          python tools/preview_locomotion.py
+      - name: Publicar videos comparativos
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparacion-animaciones-01
+          path: artifacts/comparacion-animaciones-01/*.mp4
+          if-no-files-found: error
+

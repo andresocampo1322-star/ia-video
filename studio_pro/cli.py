@@ -54,6 +54,11 @@ def _build_parser() -> argparse.ArgumentParser:
     render.add_argument("--comfy-url", default="http://127.0.0.1:8188")
     render.add_argument("--submit", action="store_true", help="Enviar a ComfyUI: ejecutar modelos")
     render.add_argument("--wait", action="store_true", help="Esperar y descargar resultados")
+    edit = command.add_parser("assemble", help="Unir clips generados en un episodio MP4")
+    edit.add_argument("--jobs", help="Manifiesto jobs.json de un render completado")
+    edit.add_argument("--clip", action="append", help="Video en orden; repetir por cada plano")
+    edit.add_argument("--out", required=True, help="Archivo MP4 resultante")
+    edit.add_argument("--force", action="store_true", help="Sobrescribir salida si ya existe")
     return ap
 
 
@@ -81,6 +86,14 @@ def main(argv: list[str] | None = None) -> int:
         for warning in project.warnings:
             print("AVISO:", warning)
         print("No se ha generado video. Usa render-project con un workflow/modelo real.")
+        return 0
+    if args.command == "assemble":
+        from .edit import assemble, clips_from_jobs
+        if bool(args.jobs) == bool(args.clip):
+            ap.error("Indica --jobs O uno o varios --clip, pero no ambos")
+        clips = clips_from_jobs(args.jobs) if args.jobs else args.clip
+        final = assemble(clips, args.out, force=args.force)
+        print(f"Episodio MP4: {final} ({final.stat().st_size} bytes)")
         return 0
     if args.command == "render-project":
         if args.wait and not args.submit:

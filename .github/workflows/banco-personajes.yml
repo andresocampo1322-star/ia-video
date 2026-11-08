@@ -1,0 +1,31 @@
+name: Banco de personajes - pruebas sin GPU
+on:
+  pull_request:
+    branches:
+      - feat/studio-pro-motor-original-sin-comfy-v8
+      - main
+permissions:
+  contents: read
+jobs:
+  banco-personajes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dependencias gratuitas de pruebas
+        run: python -m pip install --upgrade pytest "pydantic>=2.5"
+      - name: Pruebas sin red ni cuotas
+        run: python -m pytest -q tests/test_character_bank.py
+      - name: Verificar sintaxis
+        run: python -m compileall -q stickman/character_bank.py tests/test_character_bank.py
+      - name: Confirmar que no se modifica motor ni backends
+        run: |
+          if git diff --name-only "origin/feat/studio-pro-motor-original-sin-comfy-v8...HEAD" | grep -E '^stickman/(render\.py|rig/|schema\.py|ai_backend\.py|render_ai\.py)'; then
+            echo "ERROR: motor o backend alterado"; exit 1
+          fi
